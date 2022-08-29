@@ -10,6 +10,7 @@ if platform == "linux" or platform == "linux2": # linux
     DATA_PATH_PARQUET_PROCESSED = DATA_PATH_PARQUET + 'processed/'
     MODELS_PATH = '/raid/' + USERNAME + '/models/GraphDTA_Results/'
     RESULTS_PATH = DATA_PATH + 'results/'
+    MLTLE_RESULTS_PATH = DATA_PATH + 'results_mltle/'
     FINAL_RESULTS_PATH = DATA_PATH + 'final_results/'
 elif platform == "darwin": # OS X
     HOME_PATH = '/Users/madina/Documents/research/denovo_moleculardesign/Custom-GraphDTA-with-BindingDB/'
@@ -19,6 +20,8 @@ elif platform == "darwin": # OS X
     DATA_PATH_PARQUET_PROCESSED = DATA_PATH_PARQUET + 'processed/'
     MODELS_PATH = HOME_PATH + 'GraphDTA_Results/'
     RESULTS_PATH = HOME_PATH + 'large_scale_DTA/results/'
+    TEST_RESULTS_PATH_TEST = HOME_PATH + 'large_scale_DTA/test_results/'
+    MLTLE_RESULTS_PATH = HOME_PATH + 'large_scale_DTA/real_res'
     FINAL_RESULTS_PATH = HOME_PATH + 'large_scale_DTA/final_results/'
 elif platform == "win32": # Windows...
     pass
