@@ -4,7 +4,6 @@ import pandas as pd
 
 from fastparquet import ParquetFile
 
-
 from large_scale_DTA.const import RESULTS_PATH, FINAL_RESULTS_PATH, TEST_RESULTS_PATH_TEST
 
 
@@ -24,6 +23,7 @@ def transform_result_files():
         pf = ParquetFile(file)
         dataFrame = pf.to_pandas()
         dataFrame.to_csv(FINAL_RESULTS_PATH + filename + '.csv', index=False)
+
 
 def shrink_real_results():
     if not os.path.exists(TEST_RESULTS_PATH_TEST):
@@ -74,6 +74,3 @@ def create_new_data():
 
 if __name__ == '__main__':
     create_new_data()
-
-
-

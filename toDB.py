@@ -9,6 +9,7 @@ from fastparquet import ParquetFile
 
 import glob
 import os
+import base64
 
 import numpy as np
 
@@ -26,84 +27,18 @@ from pandas.core.common import SettingWithCopyWarning
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 
+def convertToBase64(message):
+    # message_bytes = message.encode('ascii')
+    # base64_bytes = base64.b64encode(message_bytes)
+    # base64_message = base64_bytes.decode('ascii')
+    # return base64.b64encode(message.encode('ascii'))
+    # output = repr(base64.b64encode(bytes(message, "utf-8")))
+    return base64.b64encode(bytes(message, "utf-8")).decode('ascii')
+
+
 def createIndex():
     es = Elasticsearch("http://localhost:9200")
 
-    # if es.indices.exists(index="index"):
-    #     body = "\"mappings\": {" \
-    #     "\"_doc\": {" \
-    #            "\"properties\": { \"Drug\": {" \
-    #             "\"type\": \"string\"," \
-    #                 "\"fields\": {" \
-    #                     "\"raw\": {" \
-    #                         "\"index\": \"not_analyzed\"," \
-    #                         "\"ignore_above\": 256," \
-    #                         "\"type\": \"string\" " \
-    #                         "}" \
-    #                 "}" \
-    #            "}," \
-    #            "\"GCNNet_kd\": {" \
-    #                 "\"type\": \"float\"" \
-    #            "}," \
-    #            "\"Target\": {" \
-    #                 "\"type\": \"string\"," \
-    #                 "\"fields\": {" \
-    #                     "\"raw\": {" \
-    #                         "\"index\": \"not_analyzed\"," \
-    #                         "\"ignore_above\": 256," \
-    #                         "\"type\": \"string\"" \
-    #                     "}" \
-    #                 "}" \
-    #            "}," \
-    #            "\"GCNNet_ic50\": {" \
-    #                 "\"type\": \"float\"" \
-    #            "}," \
-    #            "\"GATNet_ic50\": {" \
-    #            "    \"type\": \"float\"" \
-    #            "}," \
-    #            "\"GAT_GCN_ic50\": {" \
-    #            "    \"type\": \"float\"" \
-    #            "}," \
-    #            "\"GCNNet_ki\": {" \
-    #            "    \"type\": \"float\"" \
-    #            "}," \
-    #            "\"GAT_GCN_ki\": {" \
-    #            "    \"type\": \"float\"" \
-    #             "}" \
-    #         "}" \
-    #     "}" \
-    # "}"
-
-    # body = '{"settings" : {"number_of_shards": 5,"number_of_replicas": 1},' \
-    #        '"mappings": { "bind": { "_index": {"enabled": true},' \
-    #        '"_id": {"store": "yes"},' \
-    #        '"dynamic_templates": [{"strings": {"match_mapping_type": "string","match": "*",' \
-    #        '"mapping": {"type": "string","index": "not_analyzed"}}}],' \
-    #        '{"properties": {' \
-    #        '"Drug": {"type": "string", "index": "not_analyzed"},' \
-    #        '"Target": {"type": "string", "index": "not_analyzed"},' \
-    #        '"GCNNet_kd": {"type": "float"},' \
-    #        '"GATNet_kd": {"type": "float"},' \
-    #        '"GAT_GCN_kd": {"type": "float"},' \
-    #        '"GCNNet_ic50": {"type": "float"},' \
-    #        '"GATNet_ic50": {"type": "float"},' \
-    #        '"GAT_GCN_ic50": {"type": "float"},' \
-    #        '"GCNNet_ki": {"type": "float"},' \
-    #        '"GATNet_ki": {"type": "float"},' \
-    #        '"GAT_GCN_ki": {"type": "float"},' \
-    #        '"MLTLE": {"type": "float"}}}} }'
-
-    # check = {"settings" : {"number_of_shards": 5,"number_of_replicas": 1},
-    #                         "mappings": { "bind": { "_index": {"enabled": true},"_id": {"store": "yes"},
-    #                         "dynamic_templates": [{"strings": {"match_mapping_type": "string","match": "*","mapping": {"type": "string","index": "not_analyzed"}}}],
-    #                         {"properties": {"Drug": {"type": "string", "index": "not_analyzed"},
-    #                                         "Target": {"type": "string", "index": "not_analyzed"},
-    #                                         "GCNNet_kd": {"type": "float"},"GATNet_kd": {"type": "float"},
-    #                                         "GAT_GCN_kd": {"type": "float"},"GCNNet_ic50": {"type": "float"},
-    #                                         "GATNet_ic50": {"type": "float"},"GAT_GCN_ic50": {"type": "float"},
-    #                                         "GCNNet_ki": {"type": "float"},"GATNet_ki": {"type": "float"},
-    #                                         "GAT_GCN_ki": {"type": "float"},"MLTLE": {"type": "float"}}}} }
-    #
     che = {"settings": {"number_of_shards": 5, "number_of_replicas": 1},
            "mappings": {
                # "dynamic_templates": [
@@ -119,7 +54,7 @@ def createIndex():
                #     }
                # ],
                "properties": {
-                   "Drug": {"type": "binary"},
+                   "Drug": {"type": "text"},
                    "Target": {"type": "text"},
                    "GCNNet_kd": {"type": "float"}, "GATNet_kd": {"type": "float"},
                    "GAT_GCN_kd": {"type": "float"}, "GCNNet_ic50": {"type": "float"},
@@ -159,27 +94,18 @@ def delete_all():
     es = Elasticsearch("http://localhost:9200")
     es.indices.delete(index='binding', ignore=[400, 404])
 
-    # def delete_action_gen():
-    #     query_all = {
-    #         'size': 10_000,
-    #         'query': {
-    #             'match_all': {}
-    #         }
-    #     }
-    #     scanner = helpers.scan(es, index='binding',
-    #                            query={'query': {'match_all': {}}, 'fields': []})
-    #     for v in scanner:
-    #         yield {'_op_type': 'delete',
-    #                '_index': 'binding',
-    #                '_type': v['_type'],
-    #                '_id': v['_id'],
-    #                }
-    #
-    # try:
-    #     response = helpers.bulk(es, delete_action_gen())
-    #     print("\nRESPONSE:", response)
-    # except Exception as e:
-    #     print("\nERROR:", e)
+
+def prepareFakeData():
+    D1 = "CC(=O)NC(Cc1ccc2ccccc2c1)C(=O)NC(Cc1ccc(Cl)cc1)C(=O)NC(Cc1cccnc1)C(=O)NC(CO)C(=O)N(C)C(Cc1ccc(O)cc1)C(=O)NC(CC(N)=O)C(=O)NC(CC(C)C)C(=O)NC(CCCCNC(C)C)C(=O)N1CCCC1C(=O)NC(C)C(N)=O"
+    T1 = "MFRRLTFAQLLFATVLGIAGGVYIFQPVFEQYAKDQKELKEKMQLVQESEEKKS"
+
+    D2 = "CC(C)CC(NC(=O)CNC(=O)C(NC=O)C(C)C)C(=O)NC(C)C(=O)NC(C(=O)NC(C(=O)NC(C(=O)NC(Cc1c[nH]c2ccccc12)C(=O)NC(CC(C)C)C(=O)NC(Cc1c[nH]c2ccccc12)C(=O)NC(CC(C)C)C(=O)NC(Cc1c[nH]c2ccccc12)C(=O)NC(CC(C)C)C(=O)NC(Cc1c[nH]c2ccccc12)C(=O)NCCO)C(C)C)C(C)C)C(C)C"
+    T2 = "MVIMSEFSADPAGQGQGQQKPLRVGFYDIERTLGKGNFAVVKLARHRVTKTQVAIKIIDKTRLDSSNLEKIYREVQLMKLLNHPHIIKLYQVMETKDMLYIVTEFAKNGEMFDYLTSNGHLSENEARKKFWQILSAVEYCHDHHIVHRDLKTENLLLDGNMDIKLADFGFGNFYKSGEPLSTWCGSPPYAAPEVFEGKEYEGPQLDIWSLGVVLYVLVCGSLPFDGPNLPTLRQRVLEGRFRIPFFMSQDCESLIRRMLVVDPARRITIAQIRQHRWMRAEPCLPGPACPAFSAHSYTSNLGDYDEQALGIMQTLGVDRQRTVESLQNSSYNHFAAIYYLLLERLKEYRNAQCARPGPARQPRPRSSDLSGLEVPQEGLSTDPFRPALLCPQPQTLVQSVLQAEMDCELQSSLQWPLFFPVDASCSGVFRPRPVSPSSLLDTAISEEARQGPGLEEEQDTQESLPSSTGRRHTLAEVSTRLSPLTAPCIVVSPSTTASPAEGTSSDSCLTFSASKSPAGLSGTPATQGLLGACSPVRLASPFLGSQSATPVLQAQGGLGGAVLLPVSFQEGRRASDTSLTQGLKAFRQQLRKTTRTKGFLGLNKIKGLARQVCQVPASRASRGGLSPFHAPAQSPGLHGGAAGSREGWSLLEEVLEQQRLLQLQHHPAAAPGCSQAPQPAPAPFVIAPCDGPGAAPLPSTLLTSGLPLLPPPLLQTGASPVASAAQLLDTHLHIGTGPTALPAVPPPRLARLAPGCEPLGLLQGDCEMEDLMPCSLGTFVLVQ"
+
+    newFakeDF = pd.DataFrame([[D1, T1, 3.5], [D1, T2, 3.5], [D2, T1, 3.5], [D2, T2, 3.5]],
+                             columns=['Drug', 'Target', 'GCNNet_bdtdc_kd'])
+
+    return newFakeDF
 
 
 def appendToDB(df):
@@ -190,17 +116,7 @@ def appendToDB(df):
 
     actions = []
     for index, row in df.iterrows():
-        query = '{"query":{"bool":' \
-                '{"must":[{"text":{"Drug":"' + row['Drug'] + '"}},' \
-                                                             '{"text":{"Target":"' + row['Target'] + '"}}]' \
-                                                                                                     '}},"from":0,"size":10,' \
-                                                                                                     '"sort":[],"aggs":{}} '
-        # resp = es.search(index="binding", body=query)
-        # print("Got %d Hits:" % resp['hits']['total']['value'])
-        # results = resp['hits']['hits']
-        # for hit in resp['hits']['hits']:
-        #     print(hit["_source"])
-
+        row['Drug'] = convertToBase64(row['Drug'])
         actions.append({
             col_names[i].replace("bdtdc_", ""): row[col_names[i]] for i in range(len(col_names)) if
             col_names[i].lower() != "y" and col_names[i].lower() != "test"
@@ -209,6 +125,7 @@ def appendToDB(df):
     try:
         response = helpers.bulk(es, actions, index='binding')
         print("\nRESPONSE:", response)
+        # print(actions)
     except Exception as e:
         print("\nERROR:", e)
 
@@ -232,7 +149,8 @@ def append_results_toDB():
     parquet_files = glob.glob(TEST_RESULTS_PATH_TEST + '*_res_res_fake_add.parquet')
     for file in parquet_files:
         df = get_dataframe(file)
-        appendToDB(df)
+        # appendToDB(df)
+        # appendToDB()
 
 
 def searchDF(df):
@@ -243,11 +161,35 @@ def searchDF(df):
 
     actions = []
     for index, row in df.iterrows():
-        query = '{"query":{"bool":' \
-                '{"must":[{"match":{"Drug":"' + row['Drug'] + '"}},' \
-                          '{"match":{"Target":"' + row['Target'] + '"}}]' \
-                 '}},"from":0,"size":10, "sort":[],"aggs":{}} '
+        query = {
+            "query": {
+                "bool": {
+                    "should": [
+                        {
+                            "query_string": {
+                                "default_field": "Target",
+                                "query": "*" + row['Target'] + "*"
+                            }
+                        },
+                        {
+                            "query_string": {
+                                "default_field": "Drug",
+                                "query": "*" + convertToBase64(row['Drug']) + "*"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+        # print(query)
+
+        # query_old = '{"query":{"bool":' \
+        #         '{"must":[{"match":{"Drug":"' + row['Drug'] + '"}},' \
+        #                   '{"match":{"Target":"' + row['Target'] + '"}}]' \
+        #          '}},"from":0,"size":10, "sort":[],"aggs":{}} '
         resp = es.search(index="binding", body=query)
+        print(resp)
         print("Got %d Hits:" % resp['hits']['total']['value'])
         results = resp['hits']['hits']
         for hit in resp['hits']['hits']:
@@ -276,8 +218,34 @@ def get_dataframe(file):
 
 
 if __name__ == '__main__':
-    # search()
-    # createIndex()
-    append_results_toDB()
     # delete_all()
-    # add_results_toDB()
+    # createIndex()
+    fakeDF = prepareFakeData()
+    # appendToDB(fakeDF)
+    searchDF(fakeDF)
+
+    # append_results_toDB()
+    # search()
+
+
+
+# {
+#             "query": {
+#                 "bool": {
+#                     "should": [
+#                         {
+#                             "query_string": {
+#                                 "default_field": "Target",
+#                                 "query": "*" + row['Target'] + "*"
+#                             }
+#                         },
+#                         {
+#                             "query_string": {
+#                                 "default_field": "Drug",
+#                                 "query": "*" + convertToBase64(row['Drug']) + "*"
+#                             }
+#                         }
+#                     ]
+#                 }
+#             }
+#         }
